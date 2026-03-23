@@ -211,6 +211,21 @@ def delete_comment(comment_id: int, user_id: int):
     return deleted_count > 0
 
 
+def update_comment(comment_id: int, user_id: int, content: str):
+    with closing(get_connection()) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE comments
+            SET content = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (content, comment_id, user_id),
+        )
+        conn.commit()
+    return cursor.rowcount > 0
+
+
 def get_all_listings():
     with closing(get_connection()) as conn:
         conn.row_factory = sqlite3.Row
@@ -357,11 +372,10 @@ def inject_custom_css():
         .listing-card {
             background: rgba(255,251,247,0.97);
             border-radius: 24px;
-            overflow: hidden;
             border: 1px solid rgba(255,255,255,0.74);
             box-shadow: 0 16px 38px rgba(82,49,20,0.1);
             padding: 1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.1rem;
         }
         .listing-meta {
             display: flex;
@@ -408,9 +422,9 @@ def inject_custom_css():
             border: 1px solid rgba(255,255,255,0.72);
         }
         .reply-box {
-            margin-left: 1.2rem;
+            margin-left: 1rem;
             border-left: 3px solid rgba(204, 110, 73, 0.25);
-            padding-left: 0.9rem;
+            padding-left: 0.8rem;
         }
         .comment-user {
             color: #8b452b;
@@ -421,6 +435,27 @@ def inject_custom_css():
             color: #745f51;
             font-size: 0.86rem;
             margin-top: 0.25rem;
+        }
+        @media (max-width: 768px) {
+            .block-container {
+                padding-top: 1rem;
+                padding-bottom: 2rem;
+                padding-left: 0.8rem;
+                padding-right: 0.8rem;
+            }
+            .hero-title {
+                font-size: 2rem;
+            }
+            .hero-card,
+            .card-shell,
+            .listing-card,
+            .comment-box {
+                border-radius: 18px;
+            }
+            .reply-box {
+                margin-left: 0.35rem;
+                padding-left: 0.55rem;
+            }
         }
         </style>
         """,
@@ -519,12 +554,8 @@ def render_listing_form():
         return
 
     with st.form("listing_form", clear_on_submit=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            title = st.text_input("商品名稱", placeholder="例如：近全新藍牙耳機")
-        with col2:
-            price = st.number_input("價格", min_value=0, step=100, value=0)
-
+        title = st.text_input("商品名稱", placeholder="例如：近全新藍牙耳機")
+        price = st.number_input("價格", min_value=0, step=100, value=0)
         description = st.text_area(
             "販售描述",
             height=160,
@@ -570,10 +601,31 @@ def render_single_comment(comment, listing, current_user, scope, is_reply=False)
         unsafe_allow_html=True,
     )
 
-    action_columns = st.columns([1, 1, 4])
+    action_columns = st.columns([1, 1, 1.4])
 
     if current_user and current_user["id"] == comment["user_id"]:
-        if action_columns[0].button(
+        with action_columns[0].popover("修改留言"):
+            with st.form(f"edit_comment_{scope}_{comment['id']}", clear_on_submit=False):
+                edited_content = st.text_area(
+                    "修改內容",
+                    value=comment["content"],
+                    height=100,
+                    key=f"edit_comment_input_{scope}_{comment['id']}",
+                )
+                edit_submitted = st.form_submit_button("儲存修改", use_container_width=True)
+
+            if edit_submitted:
+                if not edited_content.strip():
+                    st.warning("留言內容不能空白。")
+                else:
+                    if update_comment(comment["id"], current_user["id"], edited_content.strip()):
+                        st.success("留言已更新。")
+                        st.rerun()
+                    else:
+                        st.error("修改失敗，請重新整理後再試。")
+
+    if current_user and current_user["id"] == comment["user_id"]:
+        if action_columns[1].button(
             "刪除留言", key=f"delete_comment_{scope}_{comment['id']}"
         ):
             if delete_comment(comment["id"], current_user["id"]):
@@ -585,7 +637,7 @@ def render_single_comment(comment, listing, current_user, scope, is_reply=False)
     # 只有商品賣家能回覆根留言，讓討論層級保持簡潔。
     is_seller = current_user and current_user["id"] == listing["seller_id"]
     if is_seller and not is_reply:
-        with action_columns[1].popover("賣家回覆"):
+        with action_columns[2].popover("賣家回覆"):
             with st.form(f"reply_form_{scope}_{comment['id']}", clear_on_submit=True):
                 reply_content = st.text_area(
                     "回覆內容",
@@ -655,14 +707,13 @@ def render_comments_section(listing, scope):
 
 def render_listing_card(listing, scope):
     current_user = st.session_state.current_user
-    st.markdown('<div class="listing-card">', unsafe_allow_html=True)
-    st.image(
-        build_image_data_url(listing["image_base64"], listing["image_mime"]),
-        use_container_width=True,
-    )
-    st.markdown(
-        f"""
-        <div class="listing-body">
+    with st.container():
+        st.image(
+            build_image_data_url(listing["image_base64"], listing["image_mime"]),
+            use_container_width=True,
+        )
+        st.markdown(
+            f"""
             <div class="listing-meta">
                 <span class="seller-badge">賣家：{html.escape(listing["seller_name"])}</span>
                 <span class="price-tag">{format_currency(listing["price"])}</span>
@@ -670,29 +721,26 @@ def render_listing_card(listing, scope):
             <div class="listing-title">{html.escape(listing["title"])}</div>
             <p class="listing-description">{html.escape(listing["description"])}</p>
             <div class="listing-time">刊登時間：{format_datetime(listing["created_at"])}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    if current_user and current_user["id"] == listing["seller_id"]:
-        if st.button("刪除此商品", key=f"delete_listing_{scope}_{listing['id']}"):
-            if delete_listing(listing["id"], current_user["id"]):
-                st.success("商品已刪除，相關留言也已一併移除。")
-                st.rerun()
-            else:
-                st.error("刪除失敗，請重新整理後再試。")
-
-    # expander 可讓使用者在需要時再展開大圖與互動區，維持列表瀏覽的清爽感。
-    with st.expander("放大圖片與查看留言", expanded=False):
-        st.image(
-            build_image_data_url(listing["image_base64"], listing["image_mime"]),
-            caption=f"{listing['title']}｜大圖瀏覽",
-            use_container_width=True,
+            """,
+            unsafe_allow_html=True,
         )
-        render_comments_section(listing, scope)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        if current_user and current_user["id"] == listing["seller_id"]:
+            if st.button("刪除此商品", key=f"delete_listing_{scope}_{listing['id']}"):
+                if delete_listing(listing["id"], current_user["id"]):
+                    st.success("商品已刪除，相關留言也已一併移除。")
+                    st.rerun()
+                else:
+                    st.error("刪除失敗，請重新整理後再試。")
+
+        with st.expander("放大圖片與查看留言", expanded=False):
+            st.image(
+                build_image_data_url(listing["image_base64"], listing["image_mime"]),
+                caption=f"{listing['title']}｜大圖瀏覽",
+                use_container_width=True,
+            )
+            render_comments_section(listing, scope)
+        st.divider()
 
 
 def render_listing_cards(listings, scope):
@@ -700,10 +748,9 @@ def render_listing_cards(listings, scope):
         st.info("目前還沒有任何商品刊登，登入後就能成為第一位賣家。")
         return
 
-    columns = st.columns(2)
-    for index, listing in enumerate(listings):
-        with columns[index % 2]:
-            render_listing_card(listing, scope)
+    # 改為單欄排列，手機瀏覽會明顯寬鬆，也能減少留言區被擠壓。
+    for listing in listings:
+        render_listing_card(listing, scope)
 
 
 def render_marketplace():
