@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Market Glow 探索頁</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero hero-explore">
+        <nav class="topbar">
+          <div>
+            <p class="brand-kicker">MARKET GLOW</p>
+            <h1>全站商品探索頁</h1>
+          </div>
+
+          <div class="topbar-actions">
+            <a class="nav-link" href="./index.html">返回刊登中心</a>
+            <span class="status-pill" id="exploreLoginStatus">讀取中...</span>
+          </div>
+        </nav>
+
+        <section class="hero-content">
+          <div class="hero-copy">
+            <p class="eyebrow">全部使用者販售資料</p>
+            <p class="hero-description">
+              這一頁專門瀏覽所有使用者上傳的商品，加入搜尋、價格排序與統計卡片，讓商品瀏覽更像完整平台。
+            </p>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card">
+              <span>商品總數</span>
+              <strong id="totalListingsCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span>賣家數量</span>
+              <strong id="totalSellersCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span>最新刊登</span>
+              <strong id="latestListingTime">尚無資料</strong>
+            </article>
+          </div>
+        </section>
+      </header>
+
+      <main class="main-grid single-column">
+        <section class="products-section">
+          <div class="section-heading-row wrap-on-mobile">
+            <div class="section-title">
+              <p class="eyebrow">探索條件</p>
+              <h2>瀏覽全部販售資料</h2>
+            </div>
+
+            <div class="filter-row">
+              <input
+                class="search-input"
+                id="searchInput"
+                type="search"
+                placeholder="搜尋商品名稱、描述或賣家..."
+              />
+              <select class="sort-select" id="sortSelect">
+                <option value="newest">依最新刊登排序</option>
+                <option value="priceHigh">依價格高到低</option>
+                <option value="priceLow">依價格低到高</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="message-box" id="exploreMessage">
+            這裡會顯示所有使用者上傳的販售商品。
+          </p>
+          <div class="product-grid" id="exploreProductGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="exploreProductCardTemplate">
+      <article class="product-card featured-card">
+        <img class="product-image" alt="商品圖片" />
+        <div class="product-body">
+          <div class="product-meta">
+            <span class="seller-badge"></span>
+            <span class="price-tag"></span>
+          </div>
+          <h3 class="product-title"></h3>
+          <p class="product-description"></p>
+          <p class="product-time"></p>
+        </div>
+      </article>
+    </template>
+
+    <script src="./shared.js"></script>
+    <script src="./browse.js"></script>
+  </body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Market Glow 刊登中心</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero hero-home">
+        <nav class="topbar">
+          <div>
+            <p class="brand-kicker">MARKET GLOW</p>
+            <h1>精緻視覺的刊登中心</h1>
+          </div>
+
+          <div class="topbar-actions">
+            <a class="nav-link" href="./explore.html">瀏覽所有商品</a>
+            <span class="status-pill" id="loginStatus">尚未登入</span>
+            <button class="ghost-button" id="openAuthModalButton" type="button">
+              註冊 / 登入
+            </button>
+            <button class="ghost-button hidden" id="logoutButton" type="button">
+              登出
+            </button>
+          </div>
+        </nav>
+
+        <section class="hero-content">
+          <div class="hero-copy">
+            <p class="eyebrow">賣家專區</p>
+            <p class="hero-description">
+              主頁聚焦在刊登商品，登入入口改成彈出式視窗，讓畫面更簡潔。
+              你可以在這裡上傳照片、輸入商品描述，並前往獨立頁面瀏覽全站所有使用者的販售資料。
+            </p>
+
+            <div class="hero-actions">
+              <button class="primary-button" id="openAuthHeroButton" type="button">
+                立即登入開始刊登
+              </button>
+              <a class="secondary-link" href="./explore.html">前往探索頁</a>
+            </div>
+          </div>
+
+          <div class="hero-card">
+            <p>這次調整的重點</p>
+            <ul>
+              <li>主頁專注商品刊登與賣家操作</li>
+              <li>登入改為彈出式視窗，畫面更乾淨</li>
+              <li>新增獨立探索頁可看全部商品</li>
+              <li>保留中文註解，方便你後續擴充</li>
+            </ul>
+          </div>
+        </section>
+      </header>
+
+      <main class="main-grid single-column">
+        <section class="panel listing-panel large-panel">
+          <div class="section-heading-row">
+            <div class="section-title">
+              <p class="eyebrow">商品刊登</p>
+              <h2>上傳照片與販售敘述</h2>
+            </div>
+            <a class="nav-link subtle" href="./explore.html">查看全部販售資料</a>
+          </div>
+
+          <form id="listingForm" class="form-card">
+            <div class="form-grid-two">
+              <label>
+                商品名稱
+                <input
+                  type="text"
+                  name="title"
+                  placeholder="例如：近全新機械鍵盤"
+                  required
+                />
+              </label>
+              <label>
+                價格
+                <input
+                  type="number"
+                  name="price"
+                  placeholder="例如：2800"
+                  min="0"
+                  required
+                />
+              </label>
+            </div>
+
+            <label>
+              販售描述
+              <textarea
+                name="description"
+                rows="5"
+                placeholder="請輸入商品狀況、購買時間、面交或寄送方式..."
+                required
+              ></textarea>
+            </label>
+
+            <label>
+              商品照片
+              <input type="file" name="image" accept="image/*" required />
+            </label>
+
+            <div class="preview-box tall-preview">
+              <img id="imagePreview" alt="商品預覽圖" class="hidden" />
+              <p id="previewPlaceholder">選擇圖片後，這裡會顯示商品預覽</p>
+            </div>
+
+            <button class="primary-button" id="listingSubmit" type="submit">
+              登入後可刊登商品
+            </button>
+          </form>
+
+          <p class="message-box" id="listingMessage">請先登入後再刊登商品。</p>
+        </section>
+
+        <section class="products-section">
+          <div class="section-heading-row">
+            <div class="section-title">
+              <p class="eyebrow">我的最新刊登預覽</p>
+              <h2>全站商品快覽</h2>
+            </div>
+            <a class="secondary-link" href="./explore.html">到探索頁完整查看</a>
+          </div>
+          <div class="product-grid" id="productGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- 使用 modal 當登入窗口，能保留主頁視覺完整性，也更像正式網站。 -->
+    <div class="modal-backdrop hidden" id="authModal">
+      <section class="modal-card" aria-modal="true" role="dialog" aria-labelledby="authTitle">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">會員中心</p>
+            <h2 id="authTitle">註冊 / 登入</h2>
+          </div>
+          <button class="icon-button" id="closeAuthModalButton" type="button" aria-label="關閉登入視窗">
+            ×
+          </button>
+        </div>
+
+        <div class="tab-group">
+          <button class="tab-button active" type="button" data-tab="register">
+            註冊
+          </button>
+          <button class="tab-button" type="button" data-tab="login">
+            登入
+          </button>
+        </div>
+
+        <form id="registerForm" class="form-card">
+          <label>
+            使用者名稱
+            <input type="text" name="displayName" placeholder="例如：小安" required />
+          </label>
+          <label>
+            帳號
+            <input type="text" name="account" placeholder="請設定登入帳號" required />
+          </label>
+          <label>
+            密碼
+            <input
+              type="password"
+              name="password"
+              placeholder="至少 6 碼"
+              minlength="6"
+              required
+            />
+          </label>
+          <button class="primary-button" type="submit">建立帳號</button>
+        </form>
+
+        <form id="loginForm" class="form-card hidden">
+          <label>
+            帳號
+            <input type="text" name="account" placeholder="請輸入帳號" required />
+          </label>
+          <label>
+            密碼
+            <input type="password" name="password" placeholder="請輸入密碼" required />
+          </label>
+          <button class="primary-button" type="submit">立即登入</button>
+        </form>
+
+        <p class="message-box" id="authMessage">請先註冊或登入。</p>
+      </section>
+    </div>
+
+    <template id="productCardTemplate">
+      <article class="product-card">
+        <img class="product-image" alt="商品圖片" />
+        <div class="product-body">
+          <div class="product-meta">
+            <span class="seller-badge"></span>
+            <span class="price-tag"></span>
+          </div>
+          <h3 class="product-title"></h3>
+          <p class="product-description"></p>
+          <p class="product-time"></p>
+        </div>
+      </article>
+    </template>
+
+    <script src="./shared.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
